@@ -7,7 +7,7 @@ Route::get('/', function () {
 });
 
 
-Route::prefix('api/orders')->group(function () {
-    Route::get('/', [App\Http\Controllers\OrderController::class, 'index']);
-    Route::post('/', [App\Http\Controllers\OrderController::class, 'store']);
-});
+// Route::prefix('api/orders')->group(function () {
+//     Route::get('/', [App\Http\Controllers\OrderController::class, 'index']);
+//     Route::post('/', [App\Http\Controllers\OrderController::class, 'store']);
+// });
