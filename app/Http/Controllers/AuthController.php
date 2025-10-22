@@ -11,16 +11,17 @@ class AuthController extends Controller
 {
     /**
      * Create a new AuthController instance.
-     *
-     * @return void
      */
     public function __construct()
     {
         $this->middleware('auth:api', ['except' => ['login', 'register']]);
     }
 
-    public function register(Request $request) {
-
+    /**
+     * Registro de usuário
+     */
+    public function register(Request $request)
+    {
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|string|email|unique:users',
@@ -28,47 +29,55 @@ class AuthController extends Controller
         ]);
 
         $user = new User([
-            'name'=> $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'remember_token' => ''
+            'remember_token' => '',
         ]);
 
         $user->save();
 
-        $token = $user->createToken('Token de acesso')->accessToken;
+        // 🔥 JWT token no lugar de createToken()
+        $token = Auth::login($user);
 
         return response()->json([
-            'user' => $user,
+            'user'  => $user,
             'token' => $token,
-            'res'=>'Usuario criado com sucesso'
+            'res'   => 'Usuário criado com sucesso'
         ], 201);
-
     }
 
-    public function login(Request $request) {
-
+    /**
+     * Login de usuário
+     */
+    public function login(Request $request)
+    {
         $request->validate([
-            'email' => 'required|string|email',
+            'email'    => 'required|string|email',
             'password' => 'required|string'
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $credentials = $request->only('email', 'password');
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (! $token = Auth::attempt($credentials)) {
             return response()->json(['message' => 'Credenciais inválidas'], 401);
         }
 
-        $token = $user->createToken('Token de acesso')->accessToken;
+        $user = Auth::user();
 
         return response()->json([
-            'user' => $user,
-            'token' => $token
+            'user'  => $user,
+            'token' => $token,
         ], 200);
     }
 
-    public function logout(Request $request) {
-        $request->user()->token()->revoke();
+    /**
+     * Logout e invalidação do token
+     */
+    public function logout()
+    {
+        Auth::logout();
+
         return response()->json([
             'res' => 'Deslogado com sucesso'
         ]);
