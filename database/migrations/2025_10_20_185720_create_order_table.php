@@ -18,23 +18,25 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        DB::table('order_status')->insert([
+            ['status' => 'Solicitado',  'created_at' => now(), 'updated_at' => now()],
+            ['status' => 'Aprovado',  'created_at' => now(), 'updated_at' => now()],
+            ['status' => 'Cancelado', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
         Schema::create('order', function (Blueprint $table) {
             $table->id();
             $table->string('destination');
             $table->dateTime('departure_date');
             $table->dateTime('return_date');
-            $table->biginteger('order_status_id')->unsigned();
+            $table->biginteger('order_status_id')->unsigned()->default(1);
             $table->biginteger('user_id')->unsigned();
             $table->foreign('order_status_id')->references('id')->on('order_status')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
 
-        DB::table('order_status')->insert([
-            ['status' => 'Pendente',  'created_at' => now(), 'updated_at' => now()],
-            ['status' => 'Aprovado',  'created_at' => now(), 'updated_at' => now()],
-            ['status' => 'Cancelado', 'created_at' => now(), 'updated_at' => now()],
-        ]);
+       
     }
 
     /**
