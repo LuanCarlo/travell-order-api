@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
@@ -16,7 +17,16 @@ class OrderController extends Controller
     {
         //
                 //$prods = Product::all();
-        $orders = Order::all();
+
+        $orders = DB::table('order')
+        ->join('order_status', 'order.order_status_id', '=', 'order_status.id')
+        ->join('users', 'order.user_id', '=', 'users.id')
+        ->select(['order.*', 'order_status.status', 'users.name as user',
+            DB::raw("DATE_FORMAT(departure_date, '%d/%m/%Y %H:%i:%s') AS departure_date"),
+            DB::raw("DATE_FORMAT(return_date, '%d/%m/%Y %H:%i:%s') AS return_date"),
+        ])
+        ->get();
+
         return json_encode(['status'=>200, 'record'=>$orders]);
 
     }
@@ -26,10 +36,11 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
+
         $validation = Validator::make($request->all(), [
             'destination' => 'required|string|max:255',
             'departure_date' => 'required|date',
-            'return_date' => 'required|date',
+            'return_date' => 'required|date|after:departure_date', 
             'user_id' => 'required|integer',
         ], [
             'destination.required'  => 'O campo destino é obrigatório.',
@@ -46,18 +57,24 @@ class OrderController extends Controller
         }
 
         try {
+            
+            $validatedData = $validation->validated(); 
 
-            $order = Order::create($validation);
+            $order = Order::create($validatedData);
 
             return response()->json([
                 'message' => 'Solicitação criada com sucesso!',
-                'data' => $order
-            ], 201);  
+                'data' => $order,
+                'status' => 201
+            ], 201); 
 
         } catch (Exception $e) {
-
-            return json_encode(['status'=>400, 'msg'=>$e->getMessage()]);
-        }         
+            // Trate a exceção para retornar um JSON consistente
+            return response()->json([
+                'status' => 500, // Código 500 para erro interno do servidor
+                'msg' => 'Erro ao salvar o pedido: ' . $e->getMessage()
+            ], 500); 
+        } 
     }
 
     /**
@@ -79,11 +96,10 @@ class OrderController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
         $validation = Validator::make($request->all(), [
             'destination' => 'required|string|max:255',
             'departure_date' => 'required|date',
-            'return_date' => 'required|date',
+            'return_date' => 'required|date|after:departure_date', 
             'user_id' => 'required|integer',
         ], [
             'destination.required'  => 'O campo destino é obrigatório.',
@@ -92,21 +108,21 @@ class OrderController extends Controller
             'user_id.required'   => 'Ocorreu algum problema e não foi possível obter o usuário.',
         ]);
 
-
         
         if ($validation->fails()) {
             return response()->json([
                 'errors' => $validation->errors()
             ], 422);
         }
+        
         try {
 
             $order = Order::find($id);
             if (isset($order)) {
-                $order->destination = $request->input('destination');
-                $order->departure_date = $request->input('departure_date');
-                $order->return_date = $request->input('return_date');
-                $order->user_id = $request->input('user_id');
+                $order->destination = $request->destination;
+                $order->departure_date = $request->departure_date;
+                $order->return_date = $request->return_date;
+                $order->user_id = $request->user_id;
 
                 $order->save();
                 return json_encode(['status'=>200, 'record'=>$order]);
@@ -125,5 +141,28 @@ class OrderController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function updateStatusOrder(Request $request, string $id)
+    {
+        try {
+            
+            $order = Order::find($id);
+            if (isset($order)) {
+              
+                $order->order_status_id = (int) $request->status;
+
+                $order->save();
+                return json_encode(['status'=>200, 'record'=>$order]);
+            }
+
+            return json_encode(['status'=>400, 'msg'=>' Solicitação não encontrada']);
+        } catch (Exception $e) {
+
+            return json_encode(['status'=>400, 'msg'=>$e->getMessage()]);
+        }
     }
 }

@@ -18,8 +18,9 @@ class Order extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'destination',
+        'departure_date',
+        'return_date',
+        'user_id'
     ];
 }
