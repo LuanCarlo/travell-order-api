@@ -29,15 +29,32 @@ class OrderController extends Controller
         ]);
 
         $filterStatusId = $request->query('filterStatus');
+        $filterDestination = $request->query('filterDestination');
+        $filterDateStart = $request->query('filterDateStart');
+        $filterDateEnd = $request->query('filterDateEnd');
 
-        if ($filterStatusId && $filterStatusId != 'null') {
-            
-            $query->where('order.order_status_id', $filterStatusId);
+        if ($user && $user->admin != 1) {
+            $query->where('order.user_id', $userId);
         }
 
-        // if ($user && $user->admin != 1) {
-        //     $query->where('order.user_id', $userId);
-        // }
+        if (!empty($filterStatusId) && $filterStatusId != 'null') {
+            $query->where('order.order_status_id', $filterStatusId);
+        }
+        if (!empty($filterDestination)) {
+            $query->where('order.destination', 'LIKE', '%' . $filterDestination . '%');
+        }
+        if (!empty($filterDateStart)) {
+            $query->where(function ($q) use ($filterDateStart) {
+                $q->whereDate('order.departure_date', '>=', $filterDateStart);
+                $q->orWhere('order.created_at', '>=', $filterDateStart);
+            });
+        }
+        if (!empty($filterDateEnd)) {
+            $query->where(function ($q) use ($filterDateEnd) {
+                $q->whereDate('order.departure_date', '<=', $filterDateEnd);
+                $q->orWhere('order.created_at', '<=', $filterDateEnd);
+            });
+        }
 
         $orders = $query->get();
 
