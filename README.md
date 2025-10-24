@@ -1,4 +1,6 @@
-Sobre o projeto
+# travell-order-front
+
+## Sobre o projeto
 Essa é uma api desenvolvida utilizando Laravel (v12). Para executa-lo clone o repositório, entre na pasta do projeto (travell-order-api), execute comando composer intall, após instalação, php artisan migrate, se aparecer a mensagem "Would you like to create it? (yes/no)" digite yes, ao finalizar executar o comando php artisan:serve e a api já estará pronta para uso.
 
 Atenção
