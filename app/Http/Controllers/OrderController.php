@@ -101,9 +101,8 @@ class OrderController extends Controller
             ], 201); 
 
         } catch (Exception $e) {
-            // Trate a exceção para retornar um JSON consistente
             return response()->json([
-                'status' => 500, // Código 500 para erro interno do servidor
+                'status' => 500, 
                 'msg' => 'Erro ao salvar o pedido: ' . $e->getMessage()
             ], 500); 
         } 
@@ -157,7 +156,7 @@ class OrderController extends Controller
                 $order->user_id = $request->user_id;
 
                 if ($order->order_status_id == 2 && (int) $request->order_status_id != 2) {
-                    return json_encode(['status'=>403, 'msg'=>'Você não pode alterar o status de um pedido já aprovado.']);
+                    abort(403, 'Você não pode alterar o status de um pedido já aprovado.');
                 }
 
                 $order->order_status_id = (int) $request->order_status_id;
@@ -192,7 +191,7 @@ class OrderController extends Controller
             if (isset($order)) {
               
                 if ($order->order_status_id == 2 && (int) $request->order_status_id != 2) {
-                    return json_encode(['status'=>403, 'msg'=>'Você não pode alterar o status de um pedido já aprovado.']);
+                    abort(403, 'Você não pode alterar o status de um pedido já aprovado.');
                 }
                 $order->order_status_id = (int) $request->status;
 
