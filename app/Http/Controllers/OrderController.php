@@ -139,6 +139,12 @@ class OrderController extends Controller
                 $order->return_date = $request->return_date;
                 $order->user_id = $request->user_id;
 
+                if ($order->order_status_id == 2 && (int) $request->order_status_id != 2) {
+                    return json_encode(['status'=>403, 'msg'=>'Você não pode alterar o status de um pedido já aprovado.']);
+                }
+
+                $order->order_status_id = (int) $request->order_status_id;
+
                 $order->save();
                 return json_encode(['status'=>200, 'record'=>$order]);
             }
@@ -168,6 +174,9 @@ class OrderController extends Controller
             $order = Order::find($id);
             if (isset($order)) {
               
+                if ($order->order_status_id == 2 && (int) $request->order_status_id != 2) {
+                    return json_encode(['status'=>403, 'msg'=>'Você não pode alterar o status de um pedido já aprovado.']);
+                }
                 $order->order_status_id = (int) $request->status;
 
                 $order->save();
