@@ -28,6 +28,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
         ], [
             'nome.required'  => 'O campo nome é obrigatório.',
+            'nome.max' => 'O campo nome não pode ter mais de 255 caracteres.',
             'email.required' => 'O campo email é obrigatório.',
             'email.email'    => 'O email informado não é válido.',
             'email.unique'   => 'Este email já está cadastrado.',

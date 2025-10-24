@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,21 +15,33 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-                //$prods = Product::all();
+        $userId = Auth::id();
+        $user = User::find($userId);
 
-        $orders = DB::table('order')
+        $query = DB::table('order')
         ->join('order_status', 'order.order_status_id', '=', 'order_status.id')
         ->join('users', 'order.user_id', '=', 'users.id')
         ->select(['order.*', 'order_status.status', 'users.name as user',
             DB::raw("DATE_FORMAT(departure_date, '%d/%m/%Y %H:%i:%s') AS departure_date"),
             DB::raw("DATE_FORMAT(return_date, '%d/%m/%Y %H:%i:%s') AS return_date"),
-        ])
-        ->get();
+        ]);
 
-        return json_encode(['status'=>200, 'record'=>$orders]);
+        $filterStatusId = $request->query('filterStatus');
+
+        if ($filterStatusId && $filterStatusId != 'null') {
+            
+            $query->where('order.order_status_id', $filterStatusId);
+        }
+
+        // if ($user && $user->admin != 1) {
+        //     $query->where('order.user_id', $userId);
+        // }
+
+        $orders = $query->get();
+
+        return json_encode(['status'=>200, 'record'=>$orders, 'usuario'=>$user]);
 
     }
 
@@ -44,6 +58,7 @@ class OrderController extends Controller
             'user_id' => 'required|integer',
         ], [
             'destination.required'  => 'O campo destino é obrigatório.',
+            'destination.max' => 'O campo destino não pode ter mais de 255 caracteres.',
             'departure_date.required' => 'O campo data de ida é obrigatório.',
             'return_date.required' => 'O data de volta é obrigatório.',
             'user_id.required'   => 'Ocorreu algum problema e não foi possível obter o usuário.',
@@ -83,7 +98,7 @@ class OrderController extends Controller
     public function show(string $id)
     {
         //
-        $order = Order::find($id);
+        $order = Order::with('user')->find($id);
         if (isset($order)) {
             return json_encode(['status'=>200, 'record'=>$order]);
         }
