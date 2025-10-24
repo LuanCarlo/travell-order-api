@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrderStatusUpdated;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
@@ -149,7 +151,15 @@ class OrderController extends Controller
         try {
 
             $order = Order::find($id);
+
+            $user = Auth::user();
+
             if (isset($order)) {
+
+                if ((!$user || $user->admin != 1) && ($order->order_status_id != $request->order_status_id)) {
+                    abort(403, 'Acesso negado. Você não tem permissão para alterar status.');
+                }
+
                 $order->destination = $request->destination;
                 $order->departure_date = $request->departure_date;
                 $order->return_date = $request->return_date;
@@ -186,6 +196,12 @@ class OrderController extends Controller
     public function updateStatusOrder(Request $request, string $id)
     {
         try {
+
+            $user = Auth::user();
+
+            if (!$user || $user->admin != 1) {
+                abort(403, 'Acesso negado. Você não tem permissão para alterar status.');
+            }
             
             $order = Order::find($id);
             if (isset($order)) {
@@ -196,6 +212,13 @@ class OrderController extends Controller
                 $order->order_status_id = (int) $request->status;
 
                 $order->save();
+
+                try {
+                    Mail::to($order->user->email)->send(new OrderStatusUpdated($order));
+                } catch (\Exception $e) {
+                    \Log::error('Falha ao enviar e-mail de status do pedido #' . $order->id . ': ' . $e->getMessage());
+                }
+
                 return json_encode(['status'=>200, 'record'=>$order]);
             }
 

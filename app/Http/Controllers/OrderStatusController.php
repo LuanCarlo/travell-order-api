@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\OrderSatus;
+use App\Models\OrderStatus;
 use Illuminate\Http\Request;
 
 class OrderStatusController extends Controller
@@ -14,7 +14,7 @@ class OrderStatusController extends Controller
     public function index()
     {
         //
-        $status = OrderSatus::all();
+        $status = OrderStatus::all();
         return json_encode(['status'=>200, 'record'=>$status]);
     }
 
